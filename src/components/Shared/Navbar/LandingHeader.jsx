@@ -24,6 +24,7 @@ import { useGetSingleCartByUserQuery } from "@/redux/services/cart/cartApi";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { IoMdArrowDropdown } from "react-icons/io";
+import logo from "@/assets/images/logo-white.png";
 
 const LandingHeader = () => {
   const pathname = usePathname();
@@ -195,12 +196,13 @@ const LandingHeader = () => {
               onClick={() => setIsSearchOpen(true)}
             />
           </div>
-          <Link href={"/"} className="flex flex-[1] lg:flex-none lg:ml-10">
+          <Link href={"/"} className="flex flex-[1] lg:flex-none lg:ml-10 py-4">
             <Image
-              src={globalData?.results?.logo}
+              src={globalData?.results?.logo ?? logo}
               alt="logo"
               width={100}
               height={100}
+              className="w-full h-full"
             />
           </Link>
 
