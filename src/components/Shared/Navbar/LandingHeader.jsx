@@ -131,8 +131,8 @@ const LandingHeader = () => {
 
     const filteredOptions = products?.results?.filter(
       (product) =>
-        product.name.toLowerCase().includes(value.toLowerCase()) ||
-        product.category.name?.toLowerCase().includes(value.toLowerCase())
+        product?.name?.toLowerCase().includes(value.toLowerCase()) ||
+        product?.category?.name?.toLowerCase().includes(value.toLowerCase())
     );
 
     setOptions(
@@ -202,7 +202,7 @@ const LandingHeader = () => {
               alt="logo"
               width={100}
               height={100}
-              className="w-full h-full"
+              className="lg:w-full lg:h-full w-fit h-fit"
             />
           </Link>
 

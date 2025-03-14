@@ -102,7 +102,7 @@ const CartDetails = () => {
           }
         } catch (error) {
           if (error?.data?.errorMessage === "number already exists") {
-            toast.error("Number already exists");
+            toast.error("Number already exists", { id: toastId });
           }
         }
       }
@@ -169,7 +169,7 @@ const CartDetails = () => {
         }
       }, 2000);
     } catch (error) {
-      toast.error("Error in order creation process!");
+      toast.error("Error in order creation process!", { id: toastId });
     }
   };
 
@@ -224,7 +224,7 @@ const CartDetails = () => {
                       <p className="text-primary text-2xl font-bold">
                         {globalData?.results?.currency +
                           " " +
-                          item?.price * counts[item._id]}
+                          (item?.price * counts[item._id]).toFixed(2)}
                       </p>
                     </div>
                     <div
