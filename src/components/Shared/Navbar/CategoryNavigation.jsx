@@ -4,15 +4,21 @@ import { Menu, Dropdown } from "antd";
 import Link from "next/link";
 import React from "react";
 
-const CategoryNavigation = () => {
+const CategoryNavigation = ({ setDrawer }) => {
   const { data: categories } = useGetAllCategoriesQuery();
+
+  const handleCloseDrawer = () => {
+    if (setDrawer) {
+      setDrawer(false);
+    }
+  };
 
   const renderSubcategories = (category) => {
     if (category?.subcategories && category?.subcategories.length > 0) {
       return (
         <Menu>
           {category.subcategories.map((subCategory) => (
-            <Menu.Item key={subCategory?._id}>
+            <Menu.Item key={subCategory?._id} onClick={handleCloseDrawer}>
               <Link href={`/products?filter=${subCategory?.name}`}>
                 {subCategory?.name}
                 {subCategory?.subcategories &&
@@ -35,12 +41,14 @@ const CategoryNavigation = () => {
           <Menu.SubMenu
             key={category?._id}
             title={
-              <Link
-                href={`/products?filter=${category?.name}`}
-                className="flex items-center"
-              >
-                {category?.name}
-              </Link>
+              <div onClick={handleCloseDrawer}>
+                <Link
+                  href={`/products?filter=${category?.name}`}
+                  className="flex items-center"
+                >
+                  {category?.name}
+                </Link>
+              </div>
             }
           >
             {renderSubcategories(category)}
@@ -59,16 +67,18 @@ const CategoryNavigation = () => {
           overlay={renderCategories(parentCategory)}
           trigger={["hover"]}
         >
-          <Link
-            href={`/products?filter=${parentCategory?.name}`}
-            className="flex items-center cursor-pointer"
-          >
-            <span>{parentCategory?.name}</span>
-            {parentCategory?.categories &&
-              parentCategory?.categories.length > 0 && (
-                <DownOutlined className="!text-sm" />
-              )}
-          </Link>
+          <div onClick={handleCloseDrawer}>
+            <Link
+              href={`/products?filter=${parentCategory?.name}`}
+              className="flex items-center cursor-pointer"
+            >
+              <span>{parentCategory?.name}</span>
+              {parentCategory?.categories &&
+                parentCategory?.categories.length > 0 && (
+                  <DownOutlined className="!text-sm" />
+                )}
+            </Link>
+          </div>
         </Dropdown>
       ));
   };
@@ -76,8 +86,12 @@ const CategoryNavigation = () => {
   return (
     <div className="my-container">
       <div className="flex flex-col lg:flex-row gap-5 lg:items-center flex-wrap justify-center py-5">
-        <Link href={"/offers"}>Offers</Link>
-        <Link href={"/products"}>All Products</Link>
+        <div onClick={handleCloseDrawer}>
+          <Link href={"/offers"}>Offers</Link>
+        </div>
+        <div onClick={handleCloseDrawer}>
+          <Link href={"/products"}>All Products</Link>
+        </div>
         <span className="hidden lg:block">|</span>
         <span className="lg:hidden"></span>
         {renderParentCategories()}

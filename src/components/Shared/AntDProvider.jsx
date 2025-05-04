@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ConfigProvider } from "antd";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
@@ -11,6 +11,8 @@ import { logout, useCurrentToken } from "@/redux/services/auth/authSlice";
 import { jwtDecode } from "jwt-decode";
 import { Toaster } from "sonner";
 import { usePathname } from "next/navigation";
+import { useGetAllSlidersQuery } from "@/redux/services/slider/sliderApi";
+import { useGetAllCategoriesQuery } from "../../redux/services/category/categoryApi";
 
 const AntDProvider = ({ children }) => {
   return (
@@ -28,6 +30,11 @@ const WrappedAntDConfig = ({ children }) => {
   const token = useSelector(useCurrentToken);
   const { data } = useGetAllGlobalSettingQuery();
   const { primaryColor } = useSelector(getColors);
+  const [loading, setLoading] = useState(true);
+
+  const { data: slider, isFetching } = useGetAllSlidersQuery();
+  const { data: category, isFetching: isCategoryFetching } =
+    useGetAllCategoriesQuery();
 
   useEffect(() => {
     if (token) {
@@ -39,15 +46,26 @@ const WrappedAntDConfig = ({ children }) => {
         dispatch(logout());
       }
     }
+    setLoading(true);
 
     if (data?.results) {
       const websiteName = data?.results?.name || "Viscart";
 
       document.title = websiteName;
 
-      const { primaryColor, secondaryColor } = data.results;
+      const { primaryColor, secondaryColor, favicon } = data.results;
 
       dispatch(setColors({ primaryColor, secondaryColor }));
+
+      if (favicon) {
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+          link = document.createElement("link");
+          link.rel = "icon";
+          document.head.appendChild(link);
+        }
+        link.href = favicon;
+      }
 
       document.documentElement.style.setProperty(
         "--primaryColor",
@@ -58,12 +76,34 @@ const WrappedAntDConfig = ({ children }) => {
         secondaryColor
       );
     }
+    setLoading(false);
   }, [data, dispatch, token]);
 
   useEffect(() => {
     const websiteName = data?.results?.name || "Viscart";
+    const favicon = data?.results?.favicon;
     document.title = websiteName;
+
+    let link = document.querySelector("link[rel~='icon']");
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+    link.href = favicon;
   }, [data, router]);
+
+  if (
+    loading ||
+    isFetching ||
+    slider?.results?.length === 0 ||
+    isCategoryFetching ||
+    category?.results?.length === 0
+  ) {
+    return (
+      <section className="h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+      </section>
+    );
+  }
 
   return (
     <ConfigProvider

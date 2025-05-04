@@ -6,6 +6,7 @@
   :root {
     --primaryColor: theme("colors.primary");
     --primaryLightColor: theme("colors.primaryLight");
+    background-color: #f3f5f6;
   }
 }
 
@@ -84,11 +85,11 @@
 }
 
 .two-grid {
-  @apply grid grid-cols-1 lg:grid-cols-2 lg:gap-4;
+  @apply grid grid-cols-1 lg:grid-cols-2 gap-4;
 }
 .three-grid {
   @apply grid grid-cols-1 lg:grid-cols-3 gap-4;
 }
 .my-container {
-  @apply container mx-auto px-2 lg:px-5;
+  @apply max-w-[1600px] mx-auto px-5;
 }

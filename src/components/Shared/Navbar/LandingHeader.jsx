@@ -42,9 +42,7 @@ const LandingHeader = () => {
   const { data: wishListData } = useGetSingleWishlistByUserQuery(
     user?._id ?? deviceId
   );
-  const { data: cartData, refetch } = useGetSingleCartByUserQuery(
-    user?._id ?? deviceId
-  );
+  const { data: cartData } = useGetSingleCartByUserQuery(user?._id ?? deviceId);
 
   const { data: globalData } = useGetAllGlobalSettingQuery();
   const { data: products } = useGetAllProductsQuery(undefined, {
@@ -202,7 +200,7 @@ const LandingHeader = () => {
               alt="logo"
               width={100}
               height={100}
-              className="w-full h-full"
+              className="mx-auto lg:w-full"
             />
           </Link>
 
@@ -290,7 +288,7 @@ const LandingHeader = () => {
         </div>
       </nav>
       <div className="hidden lg:flex gap-6 items-center bg-grey">
-        <CategoryNavigation />
+        <CategoryNavigation setDrawer={setIsDrawerOpen} />
       </div>
       <Drawer
         placement="left"
@@ -313,7 +311,7 @@ const LandingHeader = () => {
             <GiCancel className="text-xl text-gray-700" />
           </button>
         </div>
-        <CategoryNavigation />
+        <CategoryNavigation setDrawer={setIsDrawerOpen} />
       </Drawer>
       <Drawer
         open={isSearchOpen}
@@ -389,7 +387,7 @@ const LandingHeader = () => {
             <GiCancel className="text-xl text-gray-700" />
           </button>
         </div>
-        <DrawerCart data={cartData} refetch={refetch} />
+        <DrawerCart data={cartData} setDrawer={setIsCartOpen} />
       </Drawer>
     </header>
   );
