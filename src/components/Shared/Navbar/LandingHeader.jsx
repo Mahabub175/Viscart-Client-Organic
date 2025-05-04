@@ -129,8 +129,8 @@ const LandingHeader = () => {
 
     const filteredOptions = products?.results?.filter(
       (product) =>
-        product.name.toLowerCase().includes(value.toLowerCase()) ||
-        product.category.name?.toLowerCase().includes(value.toLowerCase())
+        product?.name?.toLowerCase().includes(value.toLowerCase()) ||
+        product?.category?.name?.toLowerCase().includes(value.toLowerCase())
     );
 
     setOptions(
