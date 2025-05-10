@@ -1,5 +1,8 @@
 {
   "name": "viscart",
+  "engines": {
+    "node": "22.14.0"
+  },
   "version": "0.1.0",
   "private": true,
   "scripts": {
