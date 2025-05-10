@@ -139,6 +139,7 @@ const LandingHeader = () => {
         label: (
           <Link
             href={`/products/${product?.slug}`}
+            onClick={() => setIsSearchOpen(false)}
             className="flex items-center gap-4 hover:text-primary pb-2 border-b border-b-gray-300"
           >
             <Image
