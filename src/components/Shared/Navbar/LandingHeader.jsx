@@ -24,7 +24,7 @@ import { useGetSingleCartByUserQuery } from "@/redux/services/cart/cartApi";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { IoMdArrowDropdown } from "react-icons/io";
-import logo from "@/assets/images/logo-white.png";
+import logo from "@/assets/images/logo.png";
 
 const LandingHeader = () => {
   const pathname = usePathname();
@@ -181,7 +181,7 @@ const LandingHeader = () => {
           {globalData?.results?.businessWhatsapp}
         </span>
       </div>
-      <nav className="my-container px-2 -my-5 lg:-my-2">
+      <nav className="my-container px-2 -my-4 lg:-my-2">
         <div className="flex justify-around items-center">
           <Button
             type="text"
@@ -210,38 +210,44 @@ const LandingHeader = () => {
               className="cursor-pointer hover:text-primary duration-300 lg:hidden"
               onClick={() => setIsSearchOpen(true)}
             />
-            {user?._id ? (
-              <>
-                {" "}
-                <div className="flex items-center gap-2">
-                  <Popover
-                    placement="bottomRight"
-                    content={content}
-                    className="cursor-pointer flex items-center gap-1"
-                  >
-                    {data?.profile_image ? (
-                      <Image
-                        src={data?.profile_image}
-                        alt="profile"
-                        height={40}
-                        width={40}
-                        className="rounded-full w-[40px] h-[40px] border-2 border-primary"
-                      />
-                    ) : (
-                      <Avatar className="" size={40} icon={<UserOutlined />} />
-                    )}
-                    <h2 className="font-semibold">{data?.name ?? "User"}</h2>
-                    <IoMdArrowDropdown />
-                  </Popover>
-                </div>
-              </>
-            ) : (
-              <>
-                <Link href={"/sign-in"}>
-                  <FaUser className="cursor-pointer hover:text-primary duration-300" />
-                </Link>
-              </>
-            )}
+            <div className="hidden lg:block">
+              {user?._id ? (
+                <>
+                  {" "}
+                  <div className="flex items-center gap-2">
+                    <Popover
+                      placement="bottomRight"
+                      content={content}
+                      className="cursor-pointer flex items-center gap-1"
+                    >
+                      {data?.profile_image ? (
+                        <Image
+                          src={data?.profile_image}
+                          alt="profile"
+                          height={40}
+                          width={40}
+                          className="rounded-full w-[40px] h-[40px] border-2 border-primary"
+                        />
+                      ) : (
+                        <Avatar
+                          className=""
+                          size={40}
+                          icon={<UserOutlined />}
+                        />
+                      )}
+                      <h2 className="font-semibold">{data?.name ?? "User"}</h2>
+                      <IoMdArrowDropdown />
+                    </Popover>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link href={"/sign-in"}>
+                    <FaUser className="cursor-pointer hover:text-primary duration-300" />
+                  </Link>
+                </>
+              )}
+            </div>
 
             <Link href={"/compare"} className="hidden lg:flex">
               {compareData?.[0]?.product?.length > 0 ? (
@@ -388,7 +394,11 @@ const LandingHeader = () => {
             <GiCancel className="text-xl text-gray-700" />
           </button>
         </div>
-        <DrawerCart data={cartData} setDrawer={setIsCartOpen} />
+        <DrawerCart
+          data={cartData}
+          setDrawer={setIsCartOpen}
+          setSearchDrawer={setIsSearchOpen}
+        />
       </Drawer>
     </header>
   );

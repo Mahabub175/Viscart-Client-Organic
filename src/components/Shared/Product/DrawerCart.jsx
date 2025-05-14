@@ -18,14 +18,19 @@ import { useSelector } from "react-redux";
 import { useDeviceId } from "@/redux/services/device/deviceSlice";
 import { useCurrentUser } from "@/redux/services/auth/authSlice";
 import { useGetSingleUserQuery } from "@/redux/services/auth/authApi";
+import useGetURL from "@/utilities/hooks/useGetURL";
+import { useAddServerTrackingMutation } from "@/redux/services/serverTracking/serverTrackingApi";
 
-const DrawerCart = ({ data, setDrawer }) => {
+const DrawerCart = ({ data, setDrawer, setSearchDrawer }) => {
   const deviceId = useSelector(useDeviceId);
   const user = useSelector(useCurrentUser);
 
   const { data: userData } = useGetSingleUserQuery(user?._id, {
     skip: !user?._id,
   });
+
+  const url = useGetURL();
+  const [addServerTracking] = useAddServerTrackingMutation();
 
   const [counts, setCounts] = useState({});
   const { data: globalData } = useGetAllGlobalSettingQuery();
@@ -37,6 +42,7 @@ const DrawerCart = ({ data, setDrawer }) => {
   const proceedToCheckout = () => {
     router.push("/cart");
     setDrawer(false);
+    setSearchDrawer(false);
   };
 
   useEffect(() => {
@@ -58,9 +64,24 @@ const DrawerCart = ({ data, setDrawer }) => {
                 userEmail: userData?.email,
               }
             : { deviceId }),
+          ...(user?._id && {
+            name: userData?.name,
+            number: userData?.number,
+            email: userData?.email,
+          }),
+          url,
         };
       });
       sendGTMEvent({ event: "cartView", value: productData });
+
+      const serverData = {
+        event: "cartView",
+        data: {
+          event_source_url: url,
+        },
+      };
+      addServerTracking(serverData);
+
       setCounts(
         data.reduce(
           (acc, item) => ({

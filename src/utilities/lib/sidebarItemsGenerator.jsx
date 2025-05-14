@@ -7,19 +7,25 @@ export const sidebarItemsGenerator = (items, pathname, role) => {
     if (item.children) {
       return {
         key: item.name,
-        icon: React.createElement(item.icon),
-        label: <div className="text-sm font-semibold">{item.name}</div>,
+        icon: null,
+        label: (
+          <div className="flex items-center gap-2">
+            {React.createElement(item.icon, { className: "text-lg" })}
+            <span className="text-sm font-semibold">{item.name}</span>
+          </div>
+        ),
         children: item.children.map((child) => ({
           key: child.name,
-          icon: React.createElement(child.icon),
+          icon: null,
           label: (
             <Link
               href={`/${role}/${child.path}`}
               onClick={scrollToTop}
-              className={`hover:text-primary font-semibold text-sm ${
+              className={`flex items-center gap-2 hover:text-primary font-semibold text-sm ${
                 pathname === `/${role}/${child.path}` ? "text-primary" : ""
               }`}
             >
+              {React.createElement(child.icon, { className: "text-lg" })}
               {child.name}
             </Link>
           ),
@@ -29,15 +35,16 @@ export const sidebarItemsGenerator = (items, pathname, role) => {
 
     return {
       key: item.name,
-      icon: React.createElement(item.icon),
+      icon: null,
       label: (
         <Link
           href={`/${role}/${item.path}`}
           onClick={scrollToTop}
-          className={`hover:text-primary font-semibold text-sm ${
+          className={`flex items-center gap-2 hover:text-primary font-semibold text-sm ${
             pathname === `/${role}/${item.path}` ? "text-primary" : ""
           }`}
         >
+          {React.createElement(item.icon, { className: "text-lg" })}
           {item.name}
         </Link>
       ),

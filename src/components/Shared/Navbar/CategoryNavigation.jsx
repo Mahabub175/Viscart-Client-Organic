@@ -89,7 +89,7 @@ const CategoryNavigation = ({ setDrawer }) => {
         <div onClick={handleCloseDrawer}>
           <Link href={"/offers"}>Offers</Link>
         </div>
-        <div onClick={handleCloseDrawer}>
+        <div onClick={handleCloseDrawer} className="-mb-5 lg:-mb-0">
           <Link href={"/products"}>All Products</Link>
         </div>
         <span className="hidden lg:block">|</span>

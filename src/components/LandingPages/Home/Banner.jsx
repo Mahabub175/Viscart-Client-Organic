@@ -6,12 +6,30 @@ import { SwiperSlide, Swiper } from "swiper/react";
 import "swiper/css";
 import { useGetAllSlidersQuery } from "@/redux/services/slider/sliderApi";
 import Link from "next/link";
+import useGetURL from "@/utilities/hooks/useGetURL";
+import { useEffect } from "react";
+import { sendGTMEvent } from "@next/third-parties/google";
+import { useAddServerTrackingMutation } from "@/redux/services/serverTracking/serverTrackingApi";
 
 const Banner = () => {
   const { data: sliders } = useGetAllSlidersQuery();
 
+  const url = useGetURL();
+  const [addServerTracking] = useAddServerTrackingMutation();
+
+  useEffect(() => {
+    sendGTMEvent({ event: "PageView", value: url });
+    const data = {
+      event: "PageView",
+      data: {
+        event_source_url: url,
+      },
+    };
+    addServerTracking(data);
+  }, [url]);
+
   const activeSliders = sliders?.results?.filter(
-    (item) => item.status === "Active"
+    (item) => item.status === "Active" && !item?.bottomBanner
   );
 
   return (

@@ -4,13 +4,11 @@ import React, { useState } from "react";
 import QuickViewHover from "../../Products/QuickViewHover";
 import { useGetAllGlobalSettingQuery } from "@/redux/services/globalSetting/globalSettingApi";
 import { formatImagePath } from "@/utilities/lib/formatImagePath";
-import { usePathname } from "next/navigation";
 import LinkButton from "@/components/Shared/LinkButton";
 import QuickProductView from "@/components/Shared/Product/QuickProductView";
 
 const ProductCard = ({ item }) => {
   const { data: globalData } = useGetAllGlobalSettingQuery();
-  const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -41,9 +39,9 @@ const ProductCard = ({ item }) => {
         ) : (
           <Image
             src={
-              pathname === "/products"
-                ? item?.mainImage
-                : formatImagePath(item?.mainImage)
+              item?.mainImage
+                ? formatImagePath(item?.mainImage)
+                : "https://thumbs.dreamstime.com/b/demo-demo-icon-139882881.jpg"
             }
             alt={item?.name}
             width={200}

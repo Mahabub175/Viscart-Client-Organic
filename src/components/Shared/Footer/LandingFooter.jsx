@@ -70,7 +70,7 @@ const LandingFooter = () => {
 
         <hr className="mt-10" />
 
-        <div className="flex flex-col md:flex-row gap-5 lg:gap-0 justify-between items-center bg-primary py-10">
+        <div className="flex flex-col md:flex-row gap-5 lg:gap-0 justify-between items-center bg-primary py-5">
           <p className="font-semibold text-white my-container">
             ©{new Date().getFullYear()}, All rights reserved
           </p>

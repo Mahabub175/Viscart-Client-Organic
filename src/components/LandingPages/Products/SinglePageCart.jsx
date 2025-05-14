@@ -85,6 +85,8 @@ const SinglePageCart = ({ params }) => {
 
   const currentPrice = currentVariant
     ? currentVariant?.sellingPrice
+    : singleProduct?.offerPrice && singleProduct?.offerPrice > 0
+    ? singleProduct?.offerPrice
     : singleProduct?.sellingPrice;
 
   const currentImage = selectedImage

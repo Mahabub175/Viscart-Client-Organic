@@ -6,6 +6,8 @@ import CustomForm from "@/components/Reusable/Form/CustomForm";
 import CustomSelect from "@/components/Reusable/Form/CustomSelect";
 import DeleteModal from "@/components/Reusable/Modal/DeleteModal";
 import DetailsModal from "@/components/Reusable/Modal/DetailsModal";
+import OrderInvoice from "@/components/Reusable/OrderInvoice";
+import { useGetAllGlobalSettingQuery } from "@/redux/services/globalSetting/globalSettingApi";
 import {
   useDeleteOrderMutation,
   useGetOrdersQuery,
@@ -27,12 +29,11 @@ import {
 } from "antd";
 import { useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { FaSearch } from "react-icons/fa";
+import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
 import { TbListDetails } from "react-icons/tb";
 import { toast } from "sonner";
-import { IoIosRefresh } from "react-icons/io";
-import { useGetAllGlobalSettingQuery } from "@/redux/services/globalSetting/globalSettingApi";
-import { FaSearch } from "react-icons/fa";
 
 const Orders = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -164,12 +165,6 @@ const Orders = () => {
       align: "center",
     },
     {
-      title: "Invoice",
-      dataIndex: "invoice",
-      key: "invoice",
-      align: "center",
-    },
-    {
       title: "Tracking Code",
       dataIndex: "trackingCode",
       key: "trackingCode",
@@ -197,6 +192,12 @@ const Orders = () => {
       align: "center",
     },
     {
+      title: "Weight",
+      dataIndex: "weight",
+      key: "weight",
+      align: "center",
+    },
+    {
       title: "Sub Total",
       dataIndex: "subTotal",
       key: "subTotal",
@@ -207,6 +208,7 @@ const Orders = () => {
       dataIndex: "shippingFee",
       key: "shippingFee",
       align: "center",
+      render: (item) => <div className="w-[100px]">{item}</div>,
     },
     {
       title: "Discount",
@@ -240,25 +242,33 @@ const Orders = () => {
             color = "orange";
             text = "Pending";
             break;
-          case "delivered":
+          case "confirmed":
             color = "green";
-            text = "delivered";
+            text = "Confirmed";
             break;
-          case "returned":
-            color = "red";
-            text = "Returned";
+          case "packaging":
+            color = "purple";
+            text = "Packaging";
             break;
-          case "processing":
+          case "out for delivery":
             color = "blue";
-            text = "Processing";
+            text = "Out For Delivery";
             break;
           case "cancelled":
             color = "red";
             text = "Cancelled";
             break;
-          case "received":
+          case "delivered":
             color = "blue";
-            text = "Received";
+            text = "Delivered";
+            break;
+          case "failed to deliver":
+            color = "red";
+            text = "Failed To Deliver";
+            break;
+          case "returned":
+            color = "red";
+            text = "Returned";
             break;
           default:
             color = "gray";
@@ -365,21 +375,13 @@ const Orders = () => {
         );
       },
     },
-    // {
-    //   title: "Fraud Detection",
-    //   dataIndex: "fraudDetection",
-    //   key: "fraudDetection",
-    //   align: "center",
-    //   render: () => (
-    //     <div
-    //       onClick={() => {
-    //         toast.info("Fraud Detection is not available in demo version.");
-    //       }}
-    //     >
-    //       <Progress type="circle" percent={0} size={40} />
-    //     </div>
-    //   ),
-    // },
+    {
+      title: "Invoice",
+      dataIndex: "invoice",
+      key: "invoice",
+      align: "center",
+      render: (_, record) => <OrderInvoice order={record} />,
+    },
     {
       title: "Auto Delivery",
       dataIndex: "autoDelivery",
@@ -388,9 +390,10 @@ const Orders = () => {
       render: (_, record) => (
         <Button
           className="capitalize font-semibold cursor-pointer"
-          type="primary"
+          type=""
           onClick={() => handleAutoDelivery(record)}
-          disabled={record.trackingCode}
+          // disabled={record.trackingCode}
+          disabled
         >
           Auto Delivery
         </Button>
@@ -442,29 +445,32 @@ const Orders = () => {
     },
   ];
 
-  const tableData = userOrders?.results?.map((item) => ({
-    key: item._id,
-    orderId: item.orderId,
-    tranId: item.tranId ?? "N/A",
-    invoice: item.invoice ?? "N/A",
-    trackingCode: item.trackingCode,
-    name: item?.name,
-    email: item?.email,
-    number: item?.number,
-    address: item?.address,
-    products: item?.products
-      ?.map((product) => product?.productName)
-      .join(" , "),
-    quantity: item?.products?.map((product) => product?.quantity).join(" , "),
-    subTotal: item?.subTotal,
-    shippingFee: item?.shippingFee,
-    discount: item?.discount ?? 0,
-    grandTotal: item?.grandTotal,
-    paymentStatus: item?.paymentStatus,
-    deliveryStatus: item?.deliveryStatus,
-    paymentMethod: item?.paymentMethod,
-    orderStatus: item?.orderStatus,
-  }));
+  const tableData = userOrders?.results?.map((item) => {
+    return {
+      key: item._id,
+      orderId: item.orderId,
+      tranId: item.tranId ?? "N/A",
+      trackingCode: item.trackingCode,
+      name: item?.name,
+      email: item?.email,
+      number: item?.number,
+      address: item?.address,
+      products: item?.products
+        ?.map((product) => product?.productName)
+        .join(" , "),
+      quantity: item?.products?.map((product) => product?.quantity).join(" , "),
+      subTotal: item?.subTotal,
+      shippingFee: item?.shippingFee + item?.extraFee,
+      discount: item?.discount ?? 0,
+      weight: item?.products?.map((product) => product?.weight).join(" , "),
+      grandTotal: item?.grandTotal,
+      paymentStatus: item?.paymentStatus,
+      deliveryStatus: item?.deliveryStatus,
+      paymentMethod: item?.paymentMethod,
+      orderStatus: item?.orderStatus,
+      extraCharge: item?.extraFee || 0,
+    };
+  });
 
   const filteredTableData = tableData?.filter((item) => {
     if (!search) return true;
@@ -559,11 +565,12 @@ const Orders = () => {
             label={"Order Status"}
             options={[
               { label: "Pending", value: "pending" },
-              { label: "Received", value: "received" },
+              { label: "Confirmed", value: "confirmed" },
+              { label: "Packaging", value: "packaging" },
+              { label: "Out For Delivery", value: "out for delivery" },
               { label: "Delivered", value: "delivered" },
               { label: "Returned", value: "returned" },
-              { label: "Cancelled", value: "cancelled" },
-              { label: "Processing", value: "processing" },
+              { label: "Failed To Deliver", value: "failed to deliver" },
             ]}
           />
           <SubmitButton fullWidth text={"Update"} loading={isLoading} />

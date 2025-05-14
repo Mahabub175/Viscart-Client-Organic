@@ -73,17 +73,17 @@ const CategoryEdit = ({ open, setOpen, itemId }) => {
       transformDefaultValues(categoryData, [
         {
           name: "categories",
-          value: categoryData?.categories?.map((item) => item?.name),
+          value: categoryData?.categories?.map((item) => item?._id),
           errors: "",
         },
         {
           name: "parentCategory",
-          value: categoryData?.parentCategory?.name,
+          value: categoryData?.parentCategory?._id,
           errors: "",
         },
         {
           name: "subCategories",
-          value: categoryData?.subCategories?.map((item) => item?.name),
+          value: categoryData?.subCategories?.map((item) => item?._id),
           errors: "",
         },
       ])

@@ -99,6 +99,7 @@ export const transformDefaultValues = (defaultValue, selectedData) => {
     }
   }
 
+  // Include any additional fields from selectedData not already present
   if (Array.isArray(selectedData)) {
     selectedData.forEach((data) => {
       if (!fields.some((field) => field.name === data.name)) {

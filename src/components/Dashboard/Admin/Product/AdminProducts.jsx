@@ -12,6 +12,7 @@ import {
   useGetProductsQuery,
   useGetSingleProductQuery,
 } from "@/redux/services/product/productApi";
+import { formatImagePath } from "@/utilities/lib/formatImagePath";
 import {
   Dropdown,
   Image,
@@ -94,7 +95,7 @@ const AdminProducts = () => {
             item ??
             "https://thumbs.dreamstime.com/b/demo-demo-icon-139882881.jpg"
           }
-          alt={"brand image"}
+          alt={"product image"}
           className="!w-12 !h-12 rounded-full"
         />
       ),
@@ -105,7 +106,7 @@ const AdminProducts = () => {
       key: "name",
       align: "start",
       render: (item, record) => (
-        <Link href={`/products/cart/${record?.slug}`} target="_blank">
+        <Link href={`/products/${record?.slug}`} target="_blank">
           {item}
         </Link>
       ),
@@ -262,7 +263,7 @@ const AdminProducts = () => {
     isVariant: item?.isVariant,
     isFeatured: item?.isFeatured,
     variants: item?.variants,
-    attachment: item?.mainImage,
+    attachment: formatImagePath(item?.mainImage),
     status: item?.status,
   }));
 

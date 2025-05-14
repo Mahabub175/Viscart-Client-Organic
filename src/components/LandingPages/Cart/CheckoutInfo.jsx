@@ -1,7 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { Form, Radio } from "antd";
-import Image from "next/image";
 import CustomInput from "@/components/Reusable/Form/CustomInput";
+import { Radio, Form, Button } from "antd";
 import { useGetAllGlobalSettingQuery } from "@/redux/services/globalSetting/globalSettingApi";
 import { FaCartShopping } from "react-icons/fa6";
 import bkash from "@/assets/images/bkash.png";
@@ -12,18 +10,44 @@ import nagad from "@/assets/images/nagad.png";
 import rocket from "@/assets/images/rocket.png";
 import upay from "@/assets/images/upay.png";
 import surecash from "@/assets/images/surecash.png";
-import { SubmitButton } from "@/components/Reusable/Button/CustomButton";
+import point from "@/assets/images/point.png";
+import Image from "next/image";
+import { useSelector } from "react-redux";
+import { useCurrentUser } from "@/redux/services/auth/authSlice";
+import { useGetSingleUserQuery } from "@/redux/services/auth/authApi";
+import { useEffect, useState } from "react";
 
-const CheckoutInfo = ({ isLoading }) => {
+const CheckoutInfo = ({
+  subTotal,
+  shippingFee,
+  discountAmount,
+  grandTotal,
+  setGrandTotal,
+  isLoading,
+}) => {
   const form = Form.useFormInstance();
   const selectedPayment = Form.useWatch("paymentMethod", form);
+
   const { data: globalData } = useGetAllGlobalSettingQuery();
 
+  const user = useSelector(useCurrentUser);
+
+  const [remainingAmount, setRemainingAmount] = useState(grandTotal);
+  const [isDisabled, setIsDisabled] = useState(false);
+
+  const { data: userData } = useGetSingleUserQuery(user?._id, {
+    skip: !user?._id,
+  });
+
+  const userPoints = userData?.point?.toFixed(2) || 0;
+  const pointConversion = globalData?.results?.pointConversion || 1;
+  const pointsAsCurrency = userPoints / pointConversion;
+
   const imageMap = {
-    cod,
-    bkash,
+    cod: cod,
+    bkash: bkash,
     bank: eft,
-    ssl,
+    ssl: ssl,
     Nagad: nagad,
     Bkash: bkash,
     Rocket: rocket,
@@ -44,13 +68,13 @@ const CheckoutInfo = ({ isLoading }) => {
       image: imageMap.cod,
       info: globalData?.results?.codMessage,
     },
-    ...(globalData?.results?.bank === "Active"
+    ...(globalData?.results?.bkash === "Active"
       ? [
           {
-            value: "bank",
-            label: "EFT/RTGS",
-            image: imageMap.bank,
-            info: globalData?.results?.bankMessage,
+            value: "bkash",
+            label: "BKash",
+            image: imageMap.bkash,
+            info: globalData?.results?.bkashMessage,
           },
         ]
       : []),
@@ -70,9 +94,73 @@ const CheckoutInfo = ({ isLoading }) => {
           label: item.name,
           image: imageMap[item.name] || null,
           info: item.description,
+          details: (
+            <>
+              <CustomInput
+                type="text"
+                name="tranId"
+                label="Transaction ID"
+                required
+              />
+              <CustomInput
+                type="text"
+                name="transaction Number"
+                label="Sender Number"
+              />
+            </>
+          ),
         }))
       : []),
+    ...(globalData?.results?.bank === "Active"
+      ? [
+          {
+            value: "bank",
+            label: "EFT/RTGS",
+            image: imageMap.bank,
+            info: globalData?.results?.bankMessage,
+          },
+        ]
+      : []),
+    ...(globalData?.results?.usePointSystem
+      ? [
+          {
+            value: "point",
+            label: `Use Points (${userPoints} points)`,
+            image: point,
+            info: `
+              <p><strong>Available Points:</strong> ${userPoints}</p>
+              <p><strong>Conversion Rate:</strong> ${pointConversion} points = 1 ${
+              globalData?.results?.currency
+            }</p>
+              <p><strong>Points Value:</strong> ${pointsAsCurrency.toFixed(
+                2
+              )} ${globalData?.results?.currency}</p>
+            `,
+          },
+        ]
+      : []),
   ];
+
+  useEffect(() => {
+    if (selectedPayment === "point") {
+      const total = subTotal + shippingFee - discountAmount;
+      if (pointsAsCurrency >= total) {
+        setRemainingAmount(0);
+        setIsDisabled(false);
+        setGrandTotal(0);
+      } else {
+        const remaining = total - pointsAsCurrency;
+        setRemainingAmount(remaining);
+        setIsDisabled(true);
+        setGrandTotal(remaining);
+      }
+    } else {
+      const total = subTotal + shippingFee - discountAmount;
+      setRemainingAmount(total);
+      setGrandTotal(total);
+      setIsDisabled(false);
+    }
+  }, [selectedPayment, userPoints, subTotal, shippingFee, discountAmount]);
 
   return (
     <div>
@@ -92,19 +180,17 @@ const CheckoutInfo = ({ isLoading }) => {
               <Radio value={option.value}>
                 <div className="font-semibold flex items-center gap-2 -my-3">
                   <span>{option.label}</span>
-                  {option.image && (
-                    <Image
-                      src={option.image}
-                      alt={option.label}
-                      width={50}
-                      className="object-contain"
-                    />
-                  )}
+                  <Image
+                    src={option.image}
+                    alt={option.label}
+                    width={50}
+                    className="object-contain"
+                  />
                 </div>
               </Radio>
               {selectedPayment === option.value && (
                 <div
-                  className="mt-1 pl-6 text-sm font-medium space-y-1"
+                  className="mt-1 pl-6 text-sm text-primary font-semibold"
                   dangerouslySetInnerHTML={{ __html: option.info }}
                 />
               )}
@@ -128,14 +214,36 @@ const CheckoutInfo = ({ isLoading }) => {
         </Radio.Group>
       </Form.Item>
 
-      <SubmitButton
+      {selectedPayment === "point" && (
+        <div className="mb-5 pl-1">
+          {grandTotal === 0 ? (
+            <p className="text-green-600">
+              Your order is fully covered by points!
+            </p>
+          ) : remainingAmount > 0 ? (
+            <p className="text-red-600">
+              You need{" "}
+              <strong>{(remainingAmount * pointConversion).toFixed(2)}</strong>{" "}
+              more points to complete the purchase.
+            </p>
+          ) : (
+            <p className="text-green-600">
+              Your order is fully covered by points!
+            </p>
+          )}
+        </div>
+      )}
+
+      <Button
+        htmlType="submit"
         size="large"
         icon={<FaCartShopping />}
+        className={`bg-navyBlue text-white font-bold px-10 w-full`}
         loading={isLoading}
-        disabled={isLoading}
-        fullWidth
-        text="Place Order"
-      />
+        disabled={isLoading || isDisabled}
+      >
+        Order Now
+      </Button>
     </div>
   );
 };

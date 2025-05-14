@@ -1,5 +1,6 @@
 "use client";
 
+import DashboardCards from "@/components/Dashboard/DashboardCards";
 import { useGetSingleUserQuery } from "@/redux/services/auth/authApi";
 import { useCurrentUser } from "@/redux/services/auth/authSlice";
 import { useGetAdminDashboardQuery } from "@/redux/services/dashboard/dashboardApi";
@@ -8,6 +9,8 @@ import Image from "next/image";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { UserOutlined } from "@ant-design/icons";
+import LogOutButton from "@/components/Dashboard/LogOutButton";
+import OrderChart from "@/components/Dashboard/OrderChart";
 
 import settings from "@/assets/images/settings.png";
 import message from "@/assets/images/message.png";
@@ -16,11 +19,9 @@ import products from "@/assets/images/products.png";
 import carts from "@/assets/images/carts.png";
 import orders from "@/assets/images/orders.png";
 import users from "@/assets/images/users.png";
-
-import DashboardCards from "@/components/Dashboard/DashboardCards";
 import OrderCards from "@/components/Dashboard/OrderCards";
-import OrderChart from "@/components/Dashboard/OrderChart";
-import LogOutButton from "@/components/Dashboard/LogOutButton";
+import CustomMarquee from "@/components/Reusable/Marquee/CustomMarquee";
+import Link from "next/link";
 
 const AdminDashboard = () => {
   useEffect(() => {
@@ -29,12 +30,34 @@ const AdminDashboard = () => {
       behavior: "smooth",
     });
   });
+
   const user = useSelector(useCurrentUser);
   const { data } = useGetSingleUserQuery(user?._id);
+
   const { data: dashboardData } = useGetAdminDashboardQuery();
+
+  const orderMessage = (
+    <div className="text-red-500">
+      ⚠️ আপনার অর্ডার লিমিটেশন শেষ। লিমিটেশন এক্সটেন্ড করতে দ্রুত{" "}
+      <Link
+        href="https://your-support-link.com"
+        className="text-blue-600 font-bold underline"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        ক্রেতা
+      </Link>{" "}
+      এর সাপোর্ট এ যোগাযোগ করুন। 📞
+    </div>
+  );
 
   return (
     <section>
+      {dashboardData?.results?.remainingOrders === 0 && (
+        <div className="-mt-16">
+          <CustomMarquee data={orderMessage} />
+        </div>
+      )}
       <div className="mb-10 flex items-center gap-5">
         <div>
           {data?.profile_image ? (
@@ -43,11 +66,11 @@ const AdminDashboard = () => {
               alt="profile"
               height={100}
               width={100}
-              className="rounded-full w-[100px] h-[100px] border-2 border-primary object-contain"
+              className="rounded-full w-[100px] h-[100px] border-2 border-primaryLight object-contain"
             />
           ) : (
             <Avatar
-              className="rounded-full w-[100px] h-[100px] border-2 border-primary"
+              className="rounded-full w-[100px] h-[100px] border-2 border-primaryLight"
               size={100}
               icon={<UserOutlined />}
             />
@@ -75,8 +98,8 @@ const AdminDashboard = () => {
         />
         <DashboardCards
           image={orders}
-          title="Orders"
-          data={dashboardData?.results?.orders}
+          title="Remaining Orders"
+          data={dashboardData?.results?.remainingOrders}
           href={"/admin/orders/order"}
         />
         <DashboardCards

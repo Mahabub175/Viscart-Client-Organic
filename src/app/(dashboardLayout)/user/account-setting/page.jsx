@@ -99,7 +99,7 @@ const UserAccountSetting = () => {
   }, [data]);
 
   return (
-    <section className="w-3/6 mx-auto">
+    <section className="lg:w-3/6 mx-auto">
       <CustomForm fields={fields} onSubmit={onSubmit}>
         <Divider orientation="left" orientationMargin={0}>
           Account Settings
@@ -119,7 +119,7 @@ const UserAccountSetting = () => {
         </div>
         <CustomInput name={"name"} label={"Name"} />
         <CustomInput name={"number"} label={"Phone Number"} required={true} />
-        <CustomInput name={"email"} label={"Email"} required={true} />
+        <CustomInput name={"email"} label={"Email"} />
         <CustomInput name={"address"} label={"Address"} type={"textarea"} />
 
         <div className="flex justify-center my-10">
@@ -135,7 +135,7 @@ const UserAccountSetting = () => {
         footer={null}
         destroyOnClose
       >
-        <div className="p-8">
+        <div className="lg:p-8">
           <CustomForm onSubmit={handlePasswordUpdate} fields={fields}>
             <CustomInput
               name={"current_password"}
@@ -149,7 +149,7 @@ const UserAccountSetting = () => {
               type={"password"}
               required
             />
-            <div className="lg:flex mt-10 gap-6 items-center justify-center">
+            <div className="flex mt-10 gap-6 items-center justify-center">
               <Button
                 onClick={() => setOpen(false)}
                 type="text"

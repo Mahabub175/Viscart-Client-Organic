@@ -2,43 +2,53 @@
 
 import { useGetAllBrandsQuery } from "@/redux/services/brand/brandApi";
 import { useGetAllCategoriesQuery } from "@/redux/services/category/categoryApi";
-import { useGetProductsQuery } from "@/redux/services/product/productApi";
+import { useGetAllProductsQuery } from "@/redux/services/product/productApi";
 import {
   Pagination,
   Slider,
   Checkbox,
   Select,
   Button,
-  Modal,
   Radio,
+  Spin,
+  Drawer,
 } from "antd";
 import { useEffect, useMemo, useState } from "react";
-import { paginationNumbers } from "@/assets/data/paginationData";
 import { useGetAllGlobalSettingQuery } from "@/redux/services/globalSetting/globalSettingApi";
 import ProductCard from "../Home/Products/ProductCard";
 import { debounce } from "lodash";
+import { GiCancel } from "react-icons/gi";
+import { useGetAllGenericsQuery } from "@/redux/services/generic/genericApi";
 
 const { Option } = Select;
 
 const AllProducts = ({ searchParams }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(18);
+  const [pageSize, setPageSize] = useState(20);
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedGenerics, setSelectedGenerics] = useState([]);
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [sorting, setSorting] = useState("");
   const [filterModal, setFilterModal] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
   const [availability, setAvailability] = useState("inStock");
+  const [loading, setLoading] = useState(false);
+  const [delayedLoading, setDelayedLoading] = useState(true);
+
+  const [filteredProducts, setFilteredProducts] = useState([]);
 
   const { data: globalData } = useGetAllGlobalSettingQuery();
   const { data: brandData } = useGetAllBrandsQuery();
   const { data: categoryData } = useGetAllCategoriesQuery();
-  const { data: productData } = useGetProductsQuery({
-    page: currentPage,
-    limit: pageSize,
-    search: "",
-  });
+  const { data: genericData } = useGetAllGenericsQuery();
+  const { data: productData } = useGetAllProductsQuery();
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredProducts.slice(startIndex, endIndex);
+  }, [filteredProducts, currentPage, pageSize]);
 
   const activeBrands = useMemo(
     () => brandData?.results?.filter((item) => item?.status !== "Inactive"),
@@ -51,8 +61,15 @@ const AllProducts = ({ searchParams }) => {
   );
 
   const activeProducts = useMemo(
-    () => productData?.results?.filter((item) => item?.status !== "Inactive"),
+    () =>
+      productData?.results?.filter((item) => item?.status !== "Inactive") || [],
     [productData]
+  );
+
+  const activeGenerics = useMemo(
+    () =>
+      genericData?.results?.filter((item) => item?.status !== "Inactive") || [],
+    [genericData]
   );
 
   const debouncedSetSearchFilter = useMemo(
@@ -64,8 +81,10 @@ const AllProducts = ({ searchParams }) => {
     if (searchParams) {
       debouncedSetSearchFilter(searchParams);
     } else {
+      setSearchFilter("");
       setSelectedBrands([]);
       setSelectedCategories([]);
+      setSelectedGenerics([]);
       setPriceRange([0, 10000]);
       setSorting("");
     }
@@ -82,48 +101,97 @@ const AllProducts = ({ searchParams }) => {
           category?.name?.toLowerCase().includes(searchFilter)
         )
         .map((category) => category.name);
+      const matchedGenerics = activeGenerics
+        ?.filter((generic) =>
+          generic?.name?.toLowerCase().includes(searchFilter)
+        )
+        .map((generic) => generic.name);
 
       setSelectedBrands(matchedBrands || []);
       setSelectedCategories(matchedCategories || []);
+      setSelectedGenerics(matchedGenerics || []);
     }
-  }, [searchFilter, activeBrands, activeCategories]);
+  }, [searchFilter, activeBrands, activeCategories, activeGenerics]);
 
-  const filteredProducts = useMemo(() => {
-    const filtered = activeProducts?.filter((product) => {
-      const isBrandMatch = selectedBrands.length
-        ? selectedBrands.includes(product?.brand?.name)
-        : true;
-      const isCategoryMatch = selectedCategories.length
-        ? selectedCategories.includes(product?.category?.name)
-        : true;
-      const isPriceMatch =
-        product.sellingPrice >= priceRange[0] &&
-        product.sellingPrice <= priceRange[1];
-      const isAvailabilityMatch =
-        availability === "inStock"
-          ? product.stock > 0
-          : availability === "outOfStock"
-          ? product.stock === 0
+  useEffect(() => {
+    const applyFilters = () => {
+      setLoading(true);
+
+      let filtered = activeProducts?.filter((product) => {
+        if (!product) return false;
+
+        const isBrandMatch = selectedBrands.length
+          ? selectedBrands.includes(product?.brand?.name)
           : true;
-      return (
-        isBrandMatch && isCategoryMatch && isPriceMatch && isAvailabilityMatch
-      );
-    });
 
-    if (sorting === "PriceLowToHigh") {
-      return filtered?.sort((a, b) => a.sellingPrice - b.sellingPrice);
-    }
-    if (sorting === "PriceHighToLow") {
-      return filtered?.sort((a, b) => b.sellingPrice - a.sellingPrice);
-    }
-    return filtered;
+        const isCategoryMatch = selectedCategories.length
+          ? selectedCategories.includes(product?.category?.name)
+          : true;
+
+        const isGenericMatch = selectedGenerics.length
+          ? selectedGenerics.includes(product?.generic?.name)
+          : true;
+
+        const isPriceMatch =
+          product.sellingPrice >= priceRange[0] &&
+          product.sellingPrice <= priceRange[1];
+
+        const isAvailabilityMatch =
+          availability === "inStock"
+            ? product.stock > 0
+            : availability === "outOfStock"
+            ? product.stock === 0
+            : true;
+
+        const isSearchMatch =
+          searchFilter?.length > 0
+            ? product?.name?.toLowerCase().includes(searchFilter) ||
+              product?.brand?.name?.toLowerCase().includes(searchFilter) ||
+              product?.category?.name?.toLowerCase().includes(searchFilter) ||
+              product?.generic?.name?.toLowerCase().includes(searchFilter)
+            : true;
+
+        return (
+          isBrandMatch &&
+          isCategoryMatch &&
+          isGenericMatch &&
+          isPriceMatch &&
+          isAvailabilityMatch &&
+          isSearchMatch
+        );
+      });
+
+      let sorted = [...filtered];
+      if (sorting === "PriceLowToHigh") {
+        sorted = sorted.sort((a, b) => {
+          const offerPriceA = a.offerPrice || a.sellingPrice;
+          const offerPriceB = b.offerPrice || b.sellingPrice;
+          return offerPriceA - offerPriceB;
+        });
+      } else if (sorting === "PriceHighToLow") {
+        sorted = sorted.sort((a, b) => {
+          const offerPriceA = a.offerPrice || a.sellingPrice;
+          const offerPriceB = b.offerPrice || b.sellingPrice;
+          return offerPriceB - offerPriceA;
+        });
+      }
+
+      setTimeout(() => {
+        setFilteredProducts(sorted);
+        setLoading(false);
+      }, 200);
+    };
+
+    applyFilters();
   }, [
     activeProducts,
     selectedBrands,
     selectedCategories,
+    selectedGenerics,
     priceRange,
     sorting,
     availability,
+    searchFilter,
   ]);
 
   const handlePageChange = (page, size) => {
@@ -151,23 +219,37 @@ const AllProducts = ({ searchParams }) => {
     setAvailability(e.target.value);
   };
 
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        setDelayedLoading(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+
   return (
-    <section className="py-10 relative -mt-10">
+    <section className="pb-10 relative">
       <div className="bg-primary py-10 lg:py-20 mb-5 lg:mb-10 text-medium text-xl md:text-3xl text-center text-white">
-        {selectedBrands.length > 0 && selectedCategories.length > 0
-          ? `(${selectedBrands.join(", ")}) (${selectedCategories.join(", ")})`
-          : selectedBrands.length > 0
-          ? `(${selectedBrands.join(", ")})`
-          : selectedCategories.length > 0
-          ? `(${selectedCategories.join(", ")})`
-          : "All Products"}
+        {selectedBrands.length > 0 ||
+        selectedCategories.length > 0 ||
+        selectedGenerics.length > 0 ? (
+          <>
+            {selectedBrands.length > 0 && `(${selectedBrands.join(", ")}) `}
+            {selectedCategories.length > 0 &&
+              `(${selectedCategories.join(", ")}) `}
+            {selectedGenerics.length > 0 && `(${selectedGenerics.join(", ")})`}
+          </>
+        ) : (
+          "All Products"
+        )}
       </div>
 
       <div className="my-container">
-        <div className="bg-gray-200 flex items-center gap-2 justify-between py-3 px-2 lg:px-6 mb-6 rounded-xl">
+        <div className="bg-white flex items-center gap-2 justify-between py-3 px-2 lg:px-6 mb-6 rounded-xl">
           <p className="text-xs md:text-base">
             <span className="font-semibold text-lg">
-              {filteredProducts?.length}
+              {loading || delayedLoading ? "..." : filteredProducts?.length}
             </span>{" "}
             products showing.
           </p>
@@ -191,15 +273,21 @@ const AllProducts = ({ searchParams }) => {
           </Button>
         </div>
         <div className="flex flex-col lg:flex-row gap-5 items-start">
-          <div className="w-full lg:w-3/12 p-4 border rounded-lg shadow-sm lg:sticky top-5 hidden lg:block">
+          <div className="w-full lg:w-3/12 p-4 border rounded-lg shadow-sm lg:sticky top-5 hidden lg:block bg-grey">
             <h2 className="mb-4 text-lg font-semibold">Filter Products</h2>
             <div className="mb-6 border p-5 rounded-xl max-h-[500px] overflow-y-auto">
               <label className="block mb-2 font-semibold">Brands</label>
               <Checkbox.Group
-                options={activeBrands?.map((brand) => ({
-                  label: brand.name,
-                  value: brand.name,
-                }))}
+                options={activeBrands?.map((brand) => {
+                  const productCount = productData?.results?.filter(
+                    (product) => product?.brand?.name === brand.name
+                  ).length;
+
+                  return {
+                    label: `${brand.name} (${productCount || 0})`,
+                    value: brand.name,
+                  };
+                })}
                 value={selectedBrands}
                 onChange={handleBrandChange}
                 className="flex flex-col gap-2"
@@ -208,15 +296,41 @@ const AllProducts = ({ searchParams }) => {
             <div className="mb-6 border p-5 rounded-xl max-h-[500px] overflow-y-auto">
               <label className="block mb-2 font-semibold">Categories</label>
               <Checkbox.Group
-                options={activeCategories?.map((category) => ({
-                  label: category.name,
-                  value: category.name,
-                }))}
+                options={activeCategories?.map((category) => {
+                  const productCount = productData?.results?.filter(
+                    (product) => product.category.name === category.name
+                  ).length;
+
+                  return {
+                    label: `${category.name} (${productCount || 0})`,
+                    value: category.name,
+                  };
+                })}
                 value={selectedCategories}
                 onChange={handleCategoryChange}
                 className="flex flex-col gap-2"
               />
             </div>
+            {activeGenerics?.length > 0 && (
+              <div className="mb-6 border p-5 rounded-xl max-h-[500px] overflow-y-auto">
+                <label className="block mb-2 font-semibold">Generics</label>
+                <Checkbox.Group
+                  options={activeGenerics?.map((generic) => {
+                    const productCount = productData?.results?.filter(
+                      (product) => product?.generic?.name === generic?.name
+                    ).length;
+
+                    return {
+                      label: `${generic.name} (${productCount || 0})`,
+                      value: generic.name,
+                    };
+                  })}
+                  value={activeGenerics}
+                  onChange={handleCategoryChange}
+                  className="flex flex-col gap-2"
+                />
+              </div>
+            )}
             <div className="mb-6">
               <label className="block mb-2 font-semibold">Price Range</label>
               <Slider
@@ -248,12 +362,12 @@ const AllProducts = ({ searchParams }) => {
                 onChange={handleAvailabilityChange}
                 className="flex flex-col gap-2"
               >
-                <Radio value="inStock">
+                <Radio value="inStock" name="inStock">
                   In Stock (
                   {filteredProducts?.filter?.((item) => item?.stock > 0).length}
                   )
                 </Radio>
-                <Radio value="outOfStock">
+                <Radio value="outOfStock" name="outOfStock">
                   Out of Stock (
                   {filteredProducts?.filter?.((item) => item?.stock < 0).length}
                   )
@@ -263,9 +377,13 @@ const AllProducts = ({ searchParams }) => {
           </div>
           <div className="w-full">
             <div>
-              {filteredProducts?.length > 0 ? (
+              {loading || delayedLoading ? (
+                <div className="flex justify-center py-10">
+                  <Spin size="large" />
+                </div>
+              ) : paginatedProducts?.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:flex lg:flex-wrap gap-5">
-                  {filteredProducts?.map((product) => (
+                  {paginatedProducts?.map((product) => (
                     <ProductCard key={product?._id} item={product} />
                   ))}
                 </div>
@@ -274,35 +392,49 @@ const AllProducts = ({ searchParams }) => {
                   No products found.
                 </p>
               )}
-              <Pagination
-                className="flex justify-end items-center !mt-10"
-                total={productData?.meta?.totalCount}
-                current={currentPage}
-                onChange={handlePageChange}
-                pageSize={pageSize}
-                showSizeChanger
-                pageSizeOptions={paginationNumbers}
-                simple
-              />
+              <div className="flex justify-end pt-10">
+                <Pagination
+                  current={currentPage}
+                  total={filteredProducts.length}
+                  pageSize={pageSize}
+                  showSizeChanger
+                  pageSizeOptions={["10", "20", "50", "100"]}
+                  onChange={handlePageChange}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <Modal
+      <Drawer
         open={filterModal}
-        onCancel={() => setFilterModal(false)}
-        footer={null}
-        centered
+        onClose={() => setFilterModal(false)}
+        placement="right"
+        width={300}
       >
-        <div className="w-full p-4">
-          <h2 className="mb-4 text-lg font-semibold">Filter Products</h2>
+        <div className="flex justify-between items-center border-b pb-2 -mt-2 mb-2">
+          <p className="lg:text-2xl font-semibold">Filter Products</p>
+          <button
+            className="mt-1 bg-gray-200 hover:scale-110 duration-500 rounded-full p-1"
+            onClick={() => setFilterModal(false)}
+          >
+            <GiCancel className="text-xl text-gray-700" />
+          </button>
+        </div>
+        <div className="w-full p-2">
           <div className="mb-6 border p-5 rounded-xl max-h-[500px] overflow-y-auto">
             <label className="block mb-2 font-semibold">Brands</label>
             <Checkbox.Group
-              options={activeBrands?.map((brand) => ({
-                label: brand.name,
-                value: brand.name,
-              }))}
+              options={activeBrands?.map((brand) => {
+                const productCount = productData?.results?.filter(
+                  (product) => product?.brand?.name === brand.name
+                ).length;
+
+                return {
+                  label: `${brand.name} (${productCount || 0})`,
+                  value: brand.name,
+                };
+              })}
               value={selectedBrands}
               onChange={handleBrandChange}
               className="flex flex-col gap-2"
@@ -311,15 +443,41 @@ const AllProducts = ({ searchParams }) => {
           <div className="mb-6 border p-5 rounded-xl max-h-[500px] overflow-y-auto">
             <label className="block mb-2 font-semibold">Categories</label>
             <Checkbox.Group
-              options={activeCategories?.map((category) => ({
-                label: category.name,
-                value: category.name,
-              }))}
-              value={selectedCategories}
+              options={activeCategories?.map((category) => {
+                const productCount = productData?.results?.filter(
+                  (product) => product.category.name === category.name
+                ).length;
+
+                return {
+                  label: `${category.name} (${productCount || 0})`,
+                  value: category.name,
+                };
+              })}
+              value={activeGenerics}
               onChange={handleCategoryChange}
               className="flex flex-col gap-2"
             />
           </div>
+          {activeGenerics?.length > 0 && (
+            <div className="mb-6 border p-5 rounded-xl max-h-[500px] overflow-y-auto">
+              <label className="block mb-2 font-semibold">Generics</label>
+              <Checkbox.Group
+                options={activeGenerics?.map((generic) => {
+                  const productCount = productData?.results?.filter(
+                    (product) => product?.generic?.name === generic?.name
+                  ).length;
+
+                  return {
+                    label: `${generic.name} (${productCount || 0})`,
+                    value: generic.name,
+                  };
+                })}
+                value={activeGenerics}
+                onChange={handleCategoryChange}
+                className="flex flex-col gap-2"
+              />
+            </div>
+          )}
           <div className="mb-6">
             <label className="block mb-2 font-semibold">Price Range</label>
             <Slider
@@ -346,19 +504,20 @@ const AllProducts = ({ searchParams }) => {
               value={availability}
               onChange={handleAvailabilityChange}
               className="flex flex-col gap-2"
+              name="stock"
             >
-              <Radio value="inStock">
+              <Radio value="inStock" name="inStock">
                 In Stock (
                 {filteredProducts?.filter?.((item) => item?.stock > 0).length})
               </Radio>
-              <Radio value="outOfStock">
+              <Radio value="outOfStock" name="outOfStock">
                 Out of Stock (
                 {filteredProducts?.filter?.((item) => item?.stock < 0).length})
               </Radio>
             </Radio.Group>
           </div>
         </div>
-      </Modal>
+      </Drawer>
     </section>
   );
 };

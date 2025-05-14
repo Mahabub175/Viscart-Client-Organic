@@ -6,8 +6,11 @@
   :root {
     --primaryColor: theme("colors.primary");
     --primaryLightColor: theme("colors.primaryLight");
-    background-color: #f3f5f6;
   }
+}
+
+body {
+  background-color: #f5f5f5;
 }
 
 ::-webkit-scrollbar {
@@ -41,24 +44,38 @@
   border: 1px solid var(--primaryColor) !important;
 }
 
-.ant-menu-item-selected {
-  color: var(--primaryColor) !important;
-}
 .ant-menu-submenu-selected > .ant-menu-submenu-title {
   color: var(--primaryColor) !important;
-  font-weight: 700 !important;
+  border-color: var(--primaryColor) !important;
 }
 
 .ant-menu-submenu-active > .ant-menu-submenu-title {
+  color: var(--primaryColor) !important;
+}
+
+.ant-menu-submenu-active > .ant-menu-submenu-title:hover {
   color: #fff !important;
 }
 
-.ant-menu-item-selected {
+.ant-menu-menu:hover > .ant-menu-submenu-title {
   color: #fff !important;
 }
 
-.ant-menu-item-active {
-  color: #fff !important;
+.breadcrumb-custom {
+  color: #000 !important;
+}
+
+.breadcrumb-custom .ant-breadcrumb-separator {
+  color: #000 !important;
+}
+
+.breadcrumb-link {
+  color: #000 !important;
+  text-decoration: none;
+}
+
+.breadcrumb-link:hover {
+  text-decoration: underline;
 }
 
 .custom-menu .ant-menu-item::after {
@@ -85,11 +102,15 @@
 }
 
 .two-grid {
-  @apply grid grid-cols-1 lg:grid-cols-2 gap-4;
+  @apply grid grid-cols-1 lg:grid-cols-2 lg:gap-4;
 }
 .three-grid {
   @apply grid grid-cols-1 lg:grid-cols-3 gap-4;
 }
 .my-container {
-  @apply max-w-[1600px] mx-auto px-5;
+  @apply container mx-auto px-5;
+}
+
+.swiper-slide-thumb-active img {
+  border-color: #7d6e4d !important;
 }
