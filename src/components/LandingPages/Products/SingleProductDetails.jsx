@@ -24,6 +24,7 @@ import { addProductId } from "@/redux/services/device/deviceSlice";
 import useGetURL from "@/utilities/hooks/useGetURL";
 import { useAddServerTrackingMutation } from "@/redux/services/serverTracking/serverTrackingApi";
 import LinkButton from "@/components/Shared/LinkButton";
+import SmallFeature from "../Home/SmallFeature";
 
 const SingleProductDetails = ({ params }) => {
   const dispatch = useDispatch();
@@ -301,6 +302,7 @@ const SingleProductDetails = ({ params }) => {
           </div>
           <ProductReview data={singleProduct?.reviews} />
         </div>
+        <SmallFeature />
         <div className="mt-20">
           {activeProducts && activeProducts.length > 0 ? (
             <>

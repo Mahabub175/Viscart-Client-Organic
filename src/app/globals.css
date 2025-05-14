@@ -112,5 +112,5 @@ body {
 }
 
 .swiper-slide-thumb-active img {
-  border-color: #7d6e4d !important;
+  border-color: var(--primaryColor) !important;
 }
