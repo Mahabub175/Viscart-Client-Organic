@@ -86,8 +86,8 @@ const DetailsModal = ({ modalOpen, setModalOpen, title, details }) => {
 
     if (
       key === "video" &&
-      (value.startsWith("https://www.youtube.com/embed/") ||
-        value.startsWith("https://player.vimeo.com/video/"))
+      (value?.startsWith("https://www.youtube.com/embed/") ||
+        value?.startsWith("https://player.vimeo.com/video/"))
     ) {
       return (
         <div className="my-4">
