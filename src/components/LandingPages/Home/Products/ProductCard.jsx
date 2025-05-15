@@ -1,6 +1,6 @@
 import { Tooltip } from "antd";
 import Image from "next/image";
-import React, { useState } from "react";
+import { useState } from "react";
 import QuickViewHover from "../../Products/QuickViewHover";
 import { useGetAllGlobalSettingQuery } from "@/redux/services/globalSetting/globalSettingApi";
 import { formatImagePath } from "@/utilities/lib/formatImagePath";
@@ -9,7 +9,6 @@ import QuickProductView from "@/components/Shared/Product/QuickProductView";
 
 const ProductCard = ({ item }) => {
   const { data: globalData } = useGetAllGlobalSettingQuery();
-  const [isHovered, setIsHovered] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleModalClose = () => {
@@ -17,38 +16,19 @@ const ProductCard = ({ item }) => {
   };
 
   return (
-    <div
-      className="relative group lg:w-[220px] mx-auto h-[400px] flex flex-col border border-gray-200 p-2"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <div className="relative group lg:w-[220px] mx-auto h-[400px] flex flex-col border border-gray-200 p-2">
       <div className="relative overflow-hidden">
-        {item?.video && isHovered ? (
-          <video
-            src={formatImagePath(item?.video)}
-            frameBorder="0"
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-            autoPlay
-            muted
-            controls={false}
-            className="w-full h-[160px] lg:h-[200px] object-cover"
-          >
-            Your browser does not support the video tag.
-          </video>
-        ) : (
-          <Image
-            src={
-              item?.mainImage
-                ? formatImagePath(item?.mainImage)
-                : "https://thumbs.dreamstime.com/b/demo-demo-icon-139882881.jpg"
-            }
-            alt={item?.name}
-            width={200}
-            height={260}
-            className="h-[180px] lg:h-[200px] group-hover:scale-110 duration-500"
-          />
-        )}
+        <Image
+          src={
+            item?.mainImage
+              ? formatImagePath(item?.mainImage)
+              : "https://thumbs.dreamstime.com/b/demo-demo-icon-139882881.jpg"
+          }
+          alt={item?.name}
+          width={200}
+          height={260}
+          className="h-[180px] lg:h-[200px] group-hover:scale-110 duration-500"
+        />
 
         <div className="hidden lg:block absolute inset-x-0 bottom-0 transform translate-y-full group-hover:translate-y-0 duration-500 z-10">
           <QuickViewHover item={item} />
