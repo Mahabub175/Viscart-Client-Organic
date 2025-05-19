@@ -325,7 +325,7 @@ const AllProducts = ({ searchParams }) => {
                       value: generic.name,
                     };
                   })}
-                  value={activeGenerics}
+                  value={selectedGenerics}
                   onChange={handleCategoryChange}
                   className="flex flex-col gap-2"
                 />
@@ -453,7 +453,7 @@ const AllProducts = ({ searchParams }) => {
                   value: category.name,
                 };
               })}
-              value={activeGenerics}
+              value={selectedCategories}
               onChange={handleCategoryChange}
               className="flex flex-col gap-2"
             />
@@ -472,7 +472,7 @@ const AllProducts = ({ searchParams }) => {
                     value: generic.name,
                   };
                 })}
-                value={activeGenerics}
+                value={selectedGenerics}
                 onChange={handleCategoryChange}
                 className="flex flex-col gap-2"
               />
