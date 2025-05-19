@@ -140,7 +140,7 @@ const UserOrders = () => {
 
       <div className="mt-10">
         {filteredData?.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:flex lg:flex-wrap gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:flex lg:justify-center lg:items-center lg:flex-wrap gap-5">
             {filteredData?.map((item) => (
               <div
                 key={item?._id}
@@ -240,7 +240,7 @@ const UserOrders = () => {
             </p>
             <p className="bg-grey p-3 mt-2">
               <strong>Shipping Fee:</strong> {globalData?.results?.currency}{" "}
-              {singleOrder?.shippingFee + singleOrder?.extraFee}
+              {singleOrder?.shippingFee + singleOrder?.extraFee || 0}
             </p>
 
             {singleOrder?.discount && (
