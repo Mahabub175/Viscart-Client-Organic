@@ -50,12 +50,12 @@ const ProductCard = ({ item }) => {
         </LinkButton>
         <div className="absolute bottom-12 left-0 right-0 mb-4">
           <div className="flex items-center gap-4 justify-center mb-2">
-            {item?.offerPrice && (
+            {item?.offerPrice > 0 && (
               <p className="text-sm lg:text-base line-through text-black/60">
                 {globalData?.results?.currency + " " + item?.sellingPrice}
               </p>
             )}
-            {item?.offerPrice ? (
+            {item?.offerPrice > 0 ? (
               <p className="text-black text-sm lg:text-base">
                 {globalData?.results?.currency + " " + item?.offerPrice}
               </p>
