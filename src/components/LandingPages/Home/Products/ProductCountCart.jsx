@@ -300,7 +300,7 @@ const ProductCountCart = ({
                 {globalData?.results?.currency + " " + item?.sellingPrice}
               </p>
             )}
-            {item?.offerPrice ? (
+            {item?.offerPrice > 0 ? (
               <p className="text-primary text-sm lg:text-xl font-medium">
                 {globalData?.results?.currency + " " + item?.offerPrice}
               </p>

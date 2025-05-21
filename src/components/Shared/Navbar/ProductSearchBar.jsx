@@ -110,7 +110,7 @@ const ProductSearchBar = ({
                       <p className="text-lg font-medium">{product?.name}</p>
                       <p className="flex items-center gap-4">
                         Price:{" "}
-                        {product?.offerPrice && (
+                        {product?.offerPrice > 0 && (
                           <span className="text-xs line-through text-red-500">
                             {globalData?.results?.currency +
                               " " +
@@ -120,7 +120,9 @@ const ProductSearchBar = ({
                         <span className="text-xs lg:text-sm">
                           {globalData?.results?.currency +
                             " " +
-                            (product?.offerPrice || product?.sellingPrice)}
+                            (product?.offerPrice > 0
+                              ? product?.offerPrice
+                              : product?.sellingPrice)}
                         </span>
                       </p>
                       <p>Category: {product?.category?.name}</p>

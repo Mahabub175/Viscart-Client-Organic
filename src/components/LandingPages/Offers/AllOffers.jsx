@@ -7,8 +7,7 @@ const AllOffers = () => {
   const { data: productData } = useGetAllProductsQuery();
 
   const filteredProducts = productData?.results?.filter(
-    (item) =>
-      item?.status !== "Inactive" && (item?.offerPrice || item?.offerPrice > 0)
+    (item) => item?.status !== "Inactive" && item?.offerPrice > 0
   );
 
   return (
