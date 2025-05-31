@@ -106,7 +106,7 @@ const AdminProducts = () => {
       key: "name",
       align: "start",
       render: (item, record) => (
-        <Link href={`/products/${record?.slug}`} target="_blank">
+        <Link href={`/products/cart/${record?.slug}`} target="_blank">
           {item}
         </Link>
       ),

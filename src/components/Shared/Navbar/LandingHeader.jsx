@@ -195,7 +195,10 @@ const LandingHeader = () => {
               onClick={() => setIsSearchOpen(true)}
             />
           </div>
-          <Link href={"/"} className="flex flex-[1] lg:flex-none lg:ml-10 py-4">
+          <Link
+            href={"/"}
+            className="flex flex-[1] lg:flex-none lg:ml-10 py-6 lg:py-4"
+          >
             <Image
               src={globalData?.results?.logo ?? logo}
               alt="logo"

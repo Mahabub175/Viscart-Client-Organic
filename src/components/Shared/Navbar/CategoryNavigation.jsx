@@ -1,15 +1,27 @@
 import { useGetAllCategoriesQuery } from "@/redux/services/category/categoryApi";
+import { resetFilter, setFilter } from "@/redux/services/device/deviceSlice";
 import { DownOutlined, RightOutlined } from "@ant-design/icons";
 import { Menu, Dropdown } from "antd";
 import Link from "next/link";
 import React from "react";
+import { useDispatch } from "react-redux";
 
 const CategoryNavigation = ({ setDrawer }) => {
+  const dispatch = useDispatch();
   const { data: categories } = useGetAllCategoriesQuery();
 
   const handleCloseDrawer = () => {
     if (setDrawer) {
       setDrawer(false);
+    }
+  };
+
+  const itemClickHandler = (item) => {
+    if (item?.name) {
+      dispatch(setFilter(item?.name));
+    }
+    if (item === "all") {
+      dispatch(resetFilter());
     }
   };
 
@@ -19,8 +31,10 @@ const CategoryNavigation = ({ setDrawer }) => {
         <Menu>
           {category.subcategories.map((subCategory) => (
             <Menu.Item key={subCategory?._id} onClick={handleCloseDrawer}>
-              <Link href={`/products?filter=${subCategory?.name}`}>
-                {subCategory?.name}
+              <Link href={`/products`}>
+                <span onClick={() => itemClickHandler(subCategory)}>
+                  {subCategory?.name}
+                </span>
                 {subCategory?.subcategories &&
                   subCategory?.subcategories.length > 0 && (
                     <RightOutlined className="ml-2" />
@@ -42,11 +56,10 @@ const CategoryNavigation = ({ setDrawer }) => {
             key={category?._id}
             title={
               <div onClick={handleCloseDrawer}>
-                <Link
-                  href={`/products?filter=${category?.name}`}
-                  className="flex items-center"
-                >
-                  {category?.name}
+                <Link href={`/products`} className="flex items-center">
+                  <p onClick={() => itemClickHandler(category)}>
+                    {category?.name}
+                  </p>
                 </Link>
               </div>
             }
@@ -69,10 +82,12 @@ const CategoryNavigation = ({ setDrawer }) => {
         >
           <div onClick={handleCloseDrawer}>
             <Link
-              href={`/products?filter=${parentCategory?.name}`}
+              href={`/products`}
               className="flex items-center cursor-pointer"
             >
-              <span>{parentCategory?.name}</span>
+              <span onClick={() => itemClickHandler(parentCategory)}>
+                {parentCategory?.name}
+              </span>
               {parentCategory?.categories &&
                 parentCategory?.categories.length > 0 && (
                   <DownOutlined className="!text-sm" />
@@ -87,10 +102,14 @@ const CategoryNavigation = ({ setDrawer }) => {
     <div className="my-container">
       <div className="flex flex-col lg:flex-row gap-5 lg:items-center flex-wrap justify-center py-5">
         <div onClick={handleCloseDrawer}>
-          <Link href={"/offers"}>Offers</Link>
+          <Link href={"/offers"}>
+            <p onClick={() => itemClickHandler("all")}>Offers</p>
+          </Link>
         </div>
         <div onClick={handleCloseDrawer} className="-mb-5 lg:-mb-0">
-          <Link href={"/products"}>All Products</Link>
+          <Link href={"/products"}>
+            <p onClick={() => itemClickHandler("all")}>All Products</p>
+          </Link>
         </div>
         <span className="hidden lg:block">|</span>
         <span className="lg:hidden"></span>

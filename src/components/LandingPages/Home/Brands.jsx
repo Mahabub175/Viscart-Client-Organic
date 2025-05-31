@@ -8,8 +8,11 @@ import { SwiperSlide, Swiper } from "swiper/react";
 import "swiper/css";
 import { useGetAllBrandsQuery } from "@/redux/services/brand/brandApi";
 import LinkButton from "@/components/Shared/LinkButton";
+import { useDispatch } from "react-redux";
+import { setFilter } from "@/redux/services/device/deviceSlice";
 
 const Brands = () => {
+  const dispatch = useDispatch();
   const swiperRef = useRef();
 
   const { data: brands } = useGetAllBrandsQuery();
@@ -17,6 +20,12 @@ const Brands = () => {
   const activeBrands = brands?.results?.filter(
     (item) => item?.status !== "Inactive"
   );
+
+  const itemClickHandler = (item) => {
+    if (item?.name) {
+      dispatch(setFilter(item?.name));
+    }
+  };
 
   return (
     <section className="my-container p-5 rounded-xl mt-1 lg:mt-10 relative -my-20">
@@ -47,7 +56,7 @@ const Brands = () => {
           {activeBrands?.map((item) => {
             return (
               <SwiperSlide key={item?._id}>
-                <LinkButton href={`/products?filter=${item?.name}`}>
+                <LinkButton href={`/products`}>
                   <Image
                     src={
                       item?.attachment ??
@@ -57,6 +66,7 @@ const Brands = () => {
                     width={240}
                     height={240}
                     className="border-2 hover:border-primary duration-500 w-[200px] h-[150px] lg:h-[200px] rounded-xl mx-auto object-cover"
+                    onClick={() => itemClickHandler(item)}
                   />
                 </LinkButton>
               </SwiperSlide>

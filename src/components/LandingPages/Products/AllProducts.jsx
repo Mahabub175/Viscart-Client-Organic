@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 "use client";
 
 import { useGetAllBrandsQuery } from "@/redux/services/brand/brandApi";
@@ -19,15 +20,17 @@ import ProductCard from "../Home/Products/ProductCard";
 import { debounce } from "lodash";
 import { GiCancel } from "react-icons/gi";
 import { useGetAllGenericsQuery } from "@/redux/services/generic/genericApi";
+import { useDispatch, useSelector } from "react-redux";
+import { resetFilter, selectFilter } from "@/redux/services/device/deviceSlice";
 
 const { Option } = Select;
 
-const AllProducts = ({ searchParams }) => {
+const AllProducts = () => {
+  const dispatch = useDispatch();
+  const searchParams = useSelector(selectFilter);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [selectedBrands, setSelectedBrands] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedGenerics, setSelectedGenerics] = useState([]);
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [sorting, setSorting] = useState("");
   const [filterModal, setFilterModal] = useState(false);
@@ -35,6 +38,9 @@ const AllProducts = ({ searchParams }) => {
   const [availability, setAvailability] = useState("inStock");
   const [loading, setLoading] = useState(false);
   const [delayedLoading, setDelayedLoading] = useState(true);
+  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedGenerics, setSelectedGenerics] = useState([]);
 
   const [filteredProducts, setFilteredProducts] = useState([]);
 
@@ -79,58 +85,55 @@ const AllProducts = ({ searchParams }) => {
 
   useEffect(() => {
     if (searchParams) {
-      debouncedSetSearchFilter(searchParams);
+      setSearchFilter([searchParams]);
+      setPriceRange([0, 10000]);
+      setSorting("");
+      setSelectedBrands(searchParams);
+      setSelectedCategories(searchParams);
+      setSelectedGenerics(searchParams);
     } else {
-      setSearchFilter("");
+      setSearchFilter([]);
+      setPriceRange([0, 10000]);
+      setSorting("");
       setSelectedBrands([]);
       setSelectedCategories([]);
       setSelectedGenerics([]);
-      setPriceRange([0, 10000]);
-      setSorting("");
     }
     return () => debouncedSetSearchFilter.cancel();
   }, [searchParams, debouncedSetSearchFilter]);
 
   useEffect(() => {
-    if (searchFilter) {
-      const matchedBrands = activeBrands
-        ?.filter((brand) => brand?.name?.toLowerCase().includes(searchFilter))
-        .map((brand) => brand.name);
-      const matchedCategories = activeCategories
-        ?.filter((category) =>
-          category?.name?.toLowerCase().includes(searchFilter)
-        )
-        .map((category) => category.name);
-      const matchedGenerics = activeGenerics
-        ?.filter((generic) =>
-          generic?.name?.toLowerCase().includes(searchFilter)
-        )
-        .map((generic) => generic.name);
-
-      setSelectedBrands(matchedBrands || []);
-      setSelectedCategories(matchedCategories || []);
-      setSelectedGenerics(matchedGenerics || []);
-    }
-  }, [searchFilter, activeBrands, activeCategories, activeGenerics]);
-
-  useEffect(() => {
     const applyFilters = () => {
       setLoading(true);
 
-      let filtered = activeProducts?.filter((product) => {
+      const filterTerms = [
+        ...new Set([
+          ...selectedBrands,
+          ...selectedCategories,
+          ...selectedGenerics,
+          ...(searchFilter || []),
+        ]),
+      ].map((f) => f?.toLowerCase());
+
+      const searchText = (searchParams || "").toLowerCase();
+
+      const matchedBrands =
+        activeBrands
+          ?.map((b) => b?.name?.toLowerCase())
+          .filter((name) => filterTerms.includes(name)) || [];
+
+      const matchedCategories =
+        activeCategories
+          ?.map((c) => c?.name?.toLowerCase())
+          .filter((name) => filterTerms.includes(name)) || [];
+
+      const matchedGenerics =
+        activeGenerics
+          ?.map((g) => g?.name?.toLowerCase())
+          .filter((name) => filterTerms.includes(name)) || [];
+
+      const filtered = activeProducts?.filter((product) => {
         if (!product) return false;
-
-        const isBrandMatch = selectedBrands.length
-          ? selectedBrands.includes(product?.brand?.name)
-          : true;
-
-        const isCategoryMatch = selectedCategories.length
-          ? selectedCategories.includes(product?.category?.name)
-          : true;
-
-        const isGenericMatch = selectedGenerics.length
-          ? selectedGenerics.includes(product?.generic?.name)
-          : true;
 
         const isPriceMatch =
           product.sellingPrice >= priceRange[0] &&
@@ -143,37 +146,48 @@ const AllProducts = ({ searchParams }) => {
             ? product.stock === 0
             : true;
 
-        const isSearchMatch =
-          searchFilter?.length > 0
-            ? product?.name?.toLowerCase().includes(searchFilter) ||
-              product?.brand?.name?.toLowerCase().includes(searchFilter) ||
-              product?.category?.name?.toLowerCase().includes(searchFilter) ||
-              product?.generic?.name?.toLowerCase().includes(searchFilter)
-            : true;
+        const brandName = product?.brand?.name?.toLowerCase();
+        const categoryName = product?.category?.name?.toLowerCase();
+        const genericName = product?.generic?.name?.toLowerCase();
+        const productName = product?.name?.toLowerCase();
+
+        const isBrandMatch =
+          matchedBrands?.length === 0 || matchedBrands?.includes(brandName);
+        const isCategoryMatch =
+          matchedCategories?.length === 0 ||
+          matchedCategories?.includes(categoryName);
+        const isGenericMatch =
+          matchedGenerics?.length === 0 ||
+          matchedGenerics?.includes(genericName);
+
+        const matchesSearchParam = searchText
+          ? productName?.includes(searchText) ||
+            brandName?.includes(searchText) ||
+            categoryName?.includes(searchText) ||
+            genericName?.includes(searchText)
+          : true;
 
         return (
+          isPriceMatch &&
+          isAvailabilityMatch &&
           isBrandMatch &&
           isCategoryMatch &&
           isGenericMatch &&
-          isPriceMatch &&
-          isAvailabilityMatch &&
-          isSearchMatch
+          matchesSearchParam
         );
       });
 
-      let sorted = [...filtered];
+      const sorted = [...filtered];
       if (sorting === "PriceLowToHigh") {
-        sorted = sorted.sort((a, b) => {
-          const offerPriceA = a.offerPrice || a.sellingPrice;
-          const offerPriceB = b.offerPrice || b.sellingPrice;
-          return offerPriceA - offerPriceB;
-        });
+        sorted.sort(
+          (a, b) =>
+            (a.offerPrice || a.sellingPrice) - (b.offerPrice || b.sellingPrice)
+        );
       } else if (sorting === "PriceHighToLow") {
-        sorted = sorted.sort((a, b) => {
-          const offerPriceA = a.offerPrice || a.sellingPrice;
-          const offerPriceB = b.offerPrice || b.sellingPrice;
-          return offerPriceB - offerPriceA;
-        });
+        sorted.sort(
+          (a, b) =>
+            (b.offerPrice || b.sellingPrice) - (a.offerPrice || a.sellingPrice)
+        );
       }
 
       setTimeout(() => {
@@ -185,26 +199,43 @@ const AllProducts = ({ searchParams }) => {
     applyFilters();
   }, [
     activeProducts,
-    selectedBrands,
-    selectedCategories,
-    selectedGenerics,
     priceRange,
     sorting,
     availability,
+    selectedBrands,
+    selectedCategories,
+    selectedGenerics,
+    searchParams,
     searchFilter,
+    activeBrands,
+    activeCategories,
+    activeGenerics,
   ]);
+
+  const handleBrandChange = (value) => {
+    if (searchParams) {
+      dispatch(resetFilter());
+    }
+    setSelectedBrands(value);
+  };
+
+  const handleCategoryChange = (value) => {
+    if (searchParams) {
+      dispatch(resetFilter());
+    }
+    setSelectedCategories(value);
+  };
+
+  const handleGenericChange = (value) => {
+    if (searchParams) {
+      dispatch(resetFilter());
+    }
+    setSelectedGenerics(value);
+  };
 
   const handlePageChange = (page, size) => {
     setCurrentPage(page);
     setPageSize(size);
-  };
-
-  const handleBrandChange = (checkedValues) => {
-    setSelectedBrands(checkedValues);
-  };
-
-  const handleCategoryChange = (checkedValues) => {
-    setSelectedCategories(checkedValues);
   };
 
   const handlePriceChange = (value) => {
@@ -231,18 +262,26 @@ const AllProducts = ({ searchParams }) => {
   return (
     <section className="pb-10 relative">
       <div className="bg-primary py-10 lg:py-20 mb-5 lg:mb-10 text-medium text-xl md:text-3xl text-center text-white">
-        {selectedBrands.length > 0 ||
-        selectedCategories.length > 0 ||
-        selectedGenerics.length > 0 ? (
-          <>
-            {selectedBrands.length > 0 && `(${selectedBrands.join(", ")}) `}
-            {selectedCategories.length > 0 &&
-              `(${selectedCategories.join(", ")}) `}
-            {selectedGenerics.length > 0 && `(${selectedGenerics.join(", ")})`}
-          </>
-        ) : (
-          "All Products"
-        )}
+        {(() => {
+          const toArray = (val) =>
+            Array.isArray(val)
+              ? val
+              : typeof val === "string"
+              ? val.split(",").map((v) => v.trim())
+              : [];
+
+          const allItems = [
+            ...toArray(selectedBrands),
+            ...toArray(selectedCategories),
+            ...toArray(selectedGenerics),
+          ];
+
+          const uniqueItems = [...new Set(allItems.filter(Boolean))];
+
+          return uniqueItems.length > 0
+            ? `(${uniqueItems.join(", ")})`
+            : "All Products";
+        })()}
       </div>
 
       <div className="my-container">
@@ -298,7 +337,7 @@ const AllProducts = ({ searchParams }) => {
               <Checkbox.Group
                 options={activeCategories?.map((category) => {
                   const productCount = productData?.results?.filter(
-                    (product) => product.category.name === category.name
+                    (product) => product?.category?.name === category?.name
                   ).length;
 
                   return {
@@ -326,7 +365,7 @@ const AllProducts = ({ searchParams }) => {
                     };
                   })}
                   value={selectedGenerics}
-                  onChange={handleCategoryChange}
+                  onChange={handleGenericChange}
                   className="flex flex-col gap-2"
                 />
               </div>
@@ -445,7 +484,7 @@ const AllProducts = ({ searchParams }) => {
             <Checkbox.Group
               options={activeCategories?.map((category) => {
                 const productCount = productData?.results?.filter(
-                  (product) => product.category.name === category.name
+                  (product) => product?.category?.name === category.name
                 ).length;
 
                 return {
@@ -473,7 +512,7 @@ const AllProducts = ({ searchParams }) => {
                   };
                 })}
                 value={selectedGenerics}
-                onChange={handleCategoryChange}
+                onChange={handleGenericChange}
                 className="flex flex-col gap-2"
               />
             </div>
