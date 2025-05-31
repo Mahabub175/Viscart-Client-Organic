@@ -261,7 +261,7 @@ const SinglePageCart = ({ params }) => {
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              className="h-fit lg:h-[500px]"
+              className="h-fit lg:h-[500px] mt-5"
             />
           </div>
         )}

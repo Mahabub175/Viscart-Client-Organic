@@ -319,7 +319,7 @@ const AllProducts = () => {
               <Checkbox.Group
                 options={activeBrands?.map((brand) => {
                   const productCount = productData?.results?.filter(
-                    (product) => product?.brand?.name === brand.name
+                    (product) => product?.brand?.name === brand?.name
                   ).length;
 
                   return {
