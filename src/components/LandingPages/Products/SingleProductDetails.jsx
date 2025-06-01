@@ -118,7 +118,9 @@ const SingleProductDetails = ({ params }) => {
       setCurrentVariant(updatedVariant);
 
       if (updatedVariant?.images) {
-        setVariantMedia(updatedVariant.images.map((image) => image));
+        setVariantMedia(
+          updatedVariant.images.map((image) => formatImagePath(image))
+        );
       } else {
         setVariantMedia([]);
       }
